@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Make ChatGPT</title>
+  <style>
+    :root {
+      --bg: #0f1724;
+      --card: #10182b;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg, #071127 0%, #071a2b 100%);
+      color: #e6eef6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+      display: flex;
+      flex-direction: column;
+      height: 90vh;
+      position: relative;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 18px;
+      flex: 1;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .switch label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    input[type=text] {
+      background: #041122;
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 8px;
+      border-radius: 8px;
+      color: inherit;
+      flex: 1;
+      min-width: 150px;
+    }
+    .chat {
+      flex: 1;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+      border-radius: 10px;
+      padding: 12px;
+      overflow-y: auto;
+      border: 1px solid rgba(255,255,255,0.05);
+      margin: 10px 0;
+    }
+    .msg {
+      display: flex;
+      margin-bottom: 12px;
+    }
+    .msg.user { justify-content: flex-end; }
+    .bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      white-space: pre-wrap;
+      line-height: 1.4;
+      font-size: 15px;
+      animation: fadeIn 0.2s ease;
+    }
+    .bubble.assistant {
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .bubble.user {
+      background: var(--accent);
+      color: #fff;
+    }
+    footer {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    textarea {
+      flex: 1;
+      min-height: 48px;
+      max-height: 120px;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #041122;
+      color: inherit;
+      resize: none;
+      font-size: 14px;
+    }
+    button {
+      background: var(--accent);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    button:hover { background: var(--accent-hover); }
+    .status {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 600px) {
+      header h1 { font-size: 16px; }
+      .controls { flex-direction: column; width: 100%; }
+      input[type=text] { width: 100%; }
+      footer { flex-direction: column; }
+      textarea { width: 100%; }
+      button { width: 100%; }
+    }
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80%;
+      overflow-y: auto;
+      color: #e6eef6;
+      font-size: 14px;
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    .close-btn {
+      background: var(--danger);
+      margin-top: 12px;
+      width: 100%;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 6px;
+    }
+    .footer a {
+      color: var(--accent);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    
+
+
+  </style>
+</head>
+<body>
+  <div class="app" role="main">
+    <header>
+      <h1>✨ Make ChatGPT</h1>
+      <div class="controls">
+        <div class="switch">
+          <label>Use OpenAI API <input id="useApi" type="checkbox" /></label>
+        </div>
+<!-- Replace your API key input with this -->
+<div class="broke" style="display:flex;gap:4px;align-items:center;">
+  <input id="apiKey" type="password" placeholder="API key (sk-...)" style="flex:1" />
+  <button id="toggleKey" style="flex-shrink:0;padding:8px 12px;">👁️</button>
+</div>
+
+        <button id="saveKey">Save</button>
+        <button id="clearChat" style="background:#ef4444;">Clear Chat</button>
+      </div>
+    </header>
+
+    <div class="status" id="modelInfo">Local demo mode</div>
+    <div id="chat" class="chat"></div>
+
+    <footer>
+      <textarea id="input" placeholder="Type a message... (Shift+Enter = new line)"></textarea>
+      <button id="send">Send</button>
+    </footer>
+
+    <div class="footer">
+      <a id="showToS">Terms & Privacy</a>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="tosModal" class="modal">
+    <div class="modal-content">
+      <h2>Terms of Service & Privacy</h2>
+      <p><strong>Privacy:</strong> This site does not collect, store, or share any personal information or API keys. Your API key is stored only in your browser and never sent to the site owner.</p>
+      <p><strong>Usage:</strong> You are responsible for your own OpenAI account, billing, and usage. Do not use this site for harmful, illegal, or abusive content.</p>
+      <p><strong>Community Rules:</strong></p>
+      <ul>
+        <li>Use responsibly — no harassment, hate speech, or disallowed prompts.</li>
+        <li>Respect OpenAI's <a href="https://platform.openai.com/docs/usage-policies" target="_blank">usage policies</a>.</li>
+        <li>Site is provided “as-is” with no guarantees.</li>
+      </ul>
+      <button class="close-btn" id="closeToS">Close</button>
+    </div>
+  </div>
+
+<script>
+const chatEl = document.getElementById('chat');
+const inputEl = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+const useApiEl = document.getElementById('useApi');
+const apiKeyEl = document.getElementById('apiKey');
+const saveKeyBtn = document.getElementById('saveKey');
+const clearBtn = document.getElementById('clearChat');
+const modelInfo = document.getElementById('modelInfo');
+
+const tosModal = document.getElementById('tosModal');
+const showToS = document.getElementById('showToS');
+const closeToS = document.getElementById('closeToS');
+
+let history = JSON.parse(localStorage.getItem('better_history')||'[]');
+let apiKey = sessionStorage.getItem('better_api_key') || '';
+apiKeyEl.value = apiKey;
+let useApi = false;
+
+function render(){
+  chatEl.innerHTML = '';
+  for(const m of history){
+    const div = document.createElement('div');
+    div.className = 'msg ' + m.role;
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble ' + m.role;
+    bubble.innerText = m.content;
+    div.appendChild(bubble);
+    chatEl.appendChild(div);
+  }
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function saveHistory(){ localStorage.setItem('better_history', JSON.stringify(history)); }
+function addMessage(role, content){ history.push({role, content}); saveHistory(); render(); }
+
+function localReply(text){
+  const t = text.toLowerCase();
+  if(/hello|hi/.test(t)) return "Hey there! I'm the local demo bot.";
+  if(/joke/.test(t)) return "Why did the JS developer go broke? Because he kept using null as his cash flow.";
+  if(/help/.test(t)) return "Try asking me about code, or enable the API for real ChatGPT responses.";
+  return `Echo: ${text}`;
+}
+
+async function callOpenAI(userText){
+  const key = sessionStorage.getItem('better_api_key');
+  if(!key) throw new Error('No API key. Save one first.');
+
+  const body = {
+    model: 'gpt-4o-mini',
+    messages: [
+      {role: 'system', content: 'You are a helpful assistant.'},
+      ...history.slice(-20),
+      {role: 'user', content: userText}
+    ],
+    max_tokens: 500
+  };
+
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + key
+    },
+    body: JSON.stringify(body)
+  });
+  if(!resp.ok) throw new Error('OpenAI: ' + resp.status + ' ' + await resp.text());
+  const data = await resp.json();
+  return data.choices?.[0]?.message?.content || "(No reply)";
+}
+
+async function send(){
+  const text = inputEl.value.trim();
+  if(!text) return;
+  addMessage('user', text);
+  inputEl.value = '';
+  modelInfo.textContent = useApi ? 'Using OpenAI API' : 'Local demo mode';
+
+  try{
+    if(useApi){
+      addMessage('assistant', '...thinking...');
+      const reply = await callOpenAI(text);
+      history.pop();
+      addMessage('assistant', reply);
+    } else {
+      addMessage('assistant', localReply(text));
+    }
+  }catch(err){
+    history.pop();
+    addMessage('assistant', 'Error: ' + err.message + ". Fallback → local reply.");
+    addMessage('assistant', localReply(text));
+  }
+}
+
+sendBtn.addEventListener('click', send);
+inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); send(); } });
+
+saveKeyBtn.addEventListener('click', ()=>{
+  const k = apiKeyEl.value.trim();
+  if(!k) { alert('Paste your OpenAI API key first.'); return; }
+  sessionStorage.setItem('better_api_key', k);
+  apiKey = k;
+  alert('API key saved in session storage.');
+});
+
+useApiEl.addEventListener('change', ()=>{
+  useApi = useApiEl.checked;
+  modelInfo.textContent = useApi ? 'Using OpenAI API' : 'Local demo mode';
+});
+
+clearBtn.addEventListener('click', ()=>{
+  if(confirm("Clear all chat history?")){
+    history = [];
+    saveHistory();
+    render();
+    addMessage('assistant', '🧹 Chat cleared! Start fresh.');
+  }
+});
+
+// Modal logic
+showToS.addEventListener('click', ()=>{ tosModal.style.display='flex'; });
+closeToS.addEventListener('click', ()=>{ tosModal.style.display='none'; });
+window.addEventListener('click', (e)=>{ if(e.target===tosModal) tosModal.style.display='none'; });
+
+render();
+if(history.length===0){ addMessage('assistant', '👋 Welcome to the improved ChatGPT demo! Ask me something, or enable the API for real responses.'); }
+
+const toggleKeyBtn = document.getElementById('toggleKey');
+toggleKeyBtn.addEventListener('click', ()=>{
+  if(apiKeyEl.type === 'password'){
+    apiKeyEl.type = 'text';
+    toggleKeyBtn.textContent = '🙈';
+  } else {
+    apiKeyEl.type = 'password';
+    toggleKeyBtn.textContent = '👁️';
+  }
+});
+
+</script>
+</body>
+</html>
